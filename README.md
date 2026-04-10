@@ -5,7 +5,8 @@ A local test bed for [fuseraft-cli](https://github.com/fuseraft/fuseraft-cli).
 ```
 fuseraft-demo-api/
 ├── fakeapi/           Mock "production" REST API (FastAPI + Swagger UI)
-└── incident-triage/   fuseraft project: agents triage incidents via the mock API
+├── incident-triage/   fuseraft project: agents triage incidents via the mock API
+└── cleanup.kiwi       Cleanup script to replay the orchestration from scratch
 ```
 
 ---
