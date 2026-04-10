@@ -1,9 +1,9 @@
-# sandboxed
+# fuseraft-demo-api
 
 A local test bed for [fuseraft-cli](https://github.com/fuseraft/fuseraft-cli).
 
 ```
-sandboxed/
+fuseraft-demo-api/
 ├── fakeapi/           Mock "production" REST API (FastAPI + Swagger UI)
 └── incident-triage/   fuseraft project: agents triage incidents via the mock API
 ```
@@ -56,17 +56,17 @@ FAKEPROD_API_KEY=my-custom-token ./start.sh
 
 A fuseraft project that tasks a four-agent team (Planner, Developer, Tester, Reviewer) with fetching incidents from the FakeProd API, escalating P1/P2 open incidents, and producing a Markdown triage report.
 
-The agents are sandboxed to `~/sandboxed/incident-triage` — they cannot read files outside that directory (including `fakeapi/`).
+The agents are sandboxed to `~/fuseraft-demo-api/incident-triage` — they cannot read files outside that directory (including `fakeapi/`).
 
 **Run:**
 
 ```bash
 # In your terminal, start the mock API first
-cd ~/sandboxed/fakeapi
+cd ~/fuseraft-demo-api/fakeapi
 FAKEPROD_API_KEY=dev-secret-token-abc123 ./start.sh
 
 # In a second terminal, run the fuseraft session
-cd ~/sandboxed/incident-triage
+cd ~/fuseraft-demo-api/incident-triage
 fuseraft run --config fuseraft.yaml --task-file task.md --tools
 ```
 
@@ -74,7 +74,7 @@ fuseraft run --config fuseraft.yaml --task-file task.md --tools
 
 ```yaml
 Security:
-  FileSystemSandboxPath: ~/sandboxed/incident-triage
+  FileSystemSandboxPath: ~/fuseraft-demo-api/incident-triage
   AllowPrivateHosts: true     # required for localhost API access
   HttpAllowedHosts:
     - localhost

@@ -2,7 +2,7 @@ Orchestration:
   Name: FuseraftDevTeam
   Description: >-
     Four-agent dev team wired to the local FakeProd REST API.
-    Run from ~/sandboxed/incident-triage with: fuseraft run --config fuseraft.yaml --task-file task.md --tools
+    Run from ~/fuseraft-demo-api/incident-triage with: fuseraft run --config fuseraft.yaml --task-file task.md --tools
 
   Models:
     fast:
@@ -206,7 +206,7 @@ Orchestration:
         MaxIterations: 30
 
   Security:
-    FileSystemSandboxPath: ~/sandboxed/incident-triage
+    FileSystemSandboxPath: ~/fuseraft-demo-api/incident-triage
     AllowPrivateHosts: true          # permits localhost — local mock API only; remove in prod
     HttpAllowedHosts:
       - localhost

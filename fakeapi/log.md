@@ -1,11 +1,11 @@
 ```bash
-scs@fedora:~/sandboxed/fakeapi$ ./start.sh 
+scs@fedora:~/fuseraft-demo-api/fakeapi$ ./start.sh 
 ==> FakeProd API
     Swagger UI : http://localhost:8000/docs
     ReDoc      : http://localhost:8000/redoc
     Bearer key : dev-secret-token-abc123
 
-INFO:     Will watch for changes in these directories: ['/home/scs/sandboxed/fakeapi']
+INFO:     Will watch for changes in these directories: ['/home/scs/fuseraft-demo-api/fakeapi']
 INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process [35074] using WatchFiles
 INFO:     Started server process [35076]
