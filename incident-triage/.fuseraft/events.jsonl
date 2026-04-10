@@ -1,0 +1,6 @@
+{"ts":"2026-04-10T02:22:00.8970100\u002B00:00","session":"21ad0b66","agent":"Planner","turn":0,"event_type":"turn_end","payload":{"input_tokens":7394,"output_tokens":459}}
+{"ts":"2026-04-10T02:23:14.8248815\u002B00:00","session":"21ad0b66","agent":"Developer","turn":1,"event_type":"turn_end","payload":{"input_tokens":141138,"output_tokens":2612}}
+{"ts":"2026-04-10T02:23:32.7755923\u002B00:00","session":"21ad0b66","agent":"Tester","turn":2,"event_type":"turn_end","payload":{"input_tokens":37933,"output_tokens":609}}
+{"ts":"2026-04-10T02:23:32.7994796\u002B00:00","session":"21ad0b66","agent":"Tester","event_type":"validation_fail","payload":{"validator":"HandoffToReviewerValidator","consecutive":1}}
+{"ts":"2026-04-10T02:23:38.5717341\u002B00:00","session":"21ad0b66","agent":"Tester","turn":3,"event_type":"turn_end","payload":{"input_tokens":27536,"output_tokens":737}}
+{"ts":"2026-04-10T02:23:52.3925001\u002B00:00","session":"21ad0b66","agent":"Reviewer","turn":4,"event_type":"turn_end","payload":{"input_tokens":71414,"output_tokens":118}}

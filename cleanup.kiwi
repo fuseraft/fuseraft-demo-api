@@ -1,0 +1,55 @@
+#!/usr/bin/env kiwi
+
+/#
+Resets ~/sandboxed/incident-triage to a clean state for the next session.
+Preserves: fuseraft.yaml, task.md
+Removes:   everything else (agent output, .fuseraft/, checkpoints, stray files)
+#/
+
+fio = import 'fio'
+
+TARGET = Path.cwd() / 'incident-triage'
+
+if not TARGET.is_dir()
+    eprintln "ERROR: ${TARGET.abspath()} does not exist."
+    exit 1
+end
+
+println "Cleaning ${TARGET.abspath()} ..."
+
+# Remove known agent-generated directories.
+dot_fuseraft = TARGET / '.fuseraft'
+dot_fuseraft.rmdir() when dot_fuseraft.exists()
+
+# Remove everything inside the directory that isn't fuseraft.yaml or task.md.
+trash = fio.glob
+        (
+            _path             = TARGET.abspath(), 
+            _include_patterns = ['**/*'],
+            _exclude_patterns = ['fuseraft.yaml', 'task.md']
+        )
+        .map(do (path) => path.to_path())
+
+trash_dirs = []
+for path in trash do
+    # collect trash directories
+    trash_dirs.push(path.parent()) when path.parent().abspath() != TARGET.abspath()
+
+    if cleanup_path(path)
+        println "Clean up file      ${path.abspath()}"
+    end
+end
+
+for path in trash_dirs do
+    if cleanup_path(path)
+        println "Clean up directory ${path.abspath()}"
+    end
+end
+
+println "Done."
+
+fn cleanup_path(path: Path): boolean
+    path.rmdir() when path.is_dir()
+    path.remove() when path.is_file()
+    not path.exists()
+end

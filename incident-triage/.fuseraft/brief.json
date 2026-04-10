@@ -1,0 +1,27 @@
+{
+  "goal": "Develop a Python script named triage.py that interacts with the FakeProd API to retrieve and triage incidents, escalate high-priority open incidents, and produce a comprehensive Markdown report.",
+  "files_to_change": [
+    {
+      "path": "triage.py",
+      "reason": "Main script to handle API interactions, incident processing, escalation, and report generation."
+    }
+  ],
+  "acceptance_criteria": [
+    "Script exits with code 0 when successful.",
+    "The report file triage-report.md is created with the specified structure.",
+    "Summary section includes correct counts of total, open (with priority breakdown), and resolved incidents.",
+    "P1/P2 open incidents section includes table with ID, Title, Priority, Status, and Assignee (resolved via API lookup or 'Unassigned').",
+    "Each P1 or P2 open incident has a note added via PATCH, verified by subsequent GET showing non-empty notes array.",
+    "All open incidents section with table of ID, Title, Priority, Status.",
+    "Resolved/closed incidents section with table of ID, Title, Priority.",
+    "Stdout prints the one-line summary in the exact format: 'Triage complete. N open (N escalated), N resolved. Report: triage-report.md'"
+  ],
+  "constraints": [
+    "Use only Python standard library and urllib for HTTP requests; no external libraries like requests or httpx.",
+    "Handle non-2xx API responses by printing error to stderr and exiting with code 1.",
+    "For assignee names in escalated table, perform GET /users/{assignee_id} to fetch user name; show 'Unassigned' if null.",
+    "Script must be runnable directly with 'python triage.py'.",
+    "Include ISO timestamp in the report generation line.",
+    "Priorities are P1, P2, etc.; count them in open incidents summary."
+  ]
+}

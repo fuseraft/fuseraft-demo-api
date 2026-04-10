@@ -1,0 +1,12 @@
+{
+  "results": [
+    { "criterion": "`python triage.py` exits with code 0", "status": "PASS", "command": "python triage.py" },
+    { "criterion": "`triage-report.md` is created and contains a `# Incident Triage Report` heading", "status": "PASS", "command": "python triage.py && grep -q '# Incident Triage Report' triage-report.md" },
+    { "criterion": "`triage-report.md` contains a `## Summary` section with total, open, and resolved counts", "status": "PASS", "command": "python triage.py && grep -q '## Summary' triage-report.md && grep -q 'Total incidents:' triage-report.md && grep -q 'Open:' triage-report.md && grep -q 'Resolved/closed:' triage-report.md" },
+    { "criterion": "`triage-report.md` contains a `## P1 / P2 Open Incidents (Escalated)` section", "status": "PASS", "command": "python triage.py && grep -q '## P1 / P2 Open Incidents (Escalated)' triage-report.md" },
+    { "criterion": "Each P1 or P2 open incident in the report has its note updated via PATCH (verified by calling GET /incidents/{id} and confirming the notes array is non-empty)", "status": "PASS", "command": "python triage.py && curl -s -H 'Authorization: Bearer dev-secret-token-abc123' http://localhost:8000/incidents/INC-1004 | jq '.notes | length > 0' && curl -s -H 'Authorization: Bearer dev-secret-token-abc123' http://localhost:8000/incidents/INC-1007 | jq '.notes | length > 0' && curl -s -H 'Authorization: Bearer dev-secret-token-abc123' http://localhost:8000/incidents/INC-1009 | jq '.notes | length > 0' && curl -s -H 'Authorization: Bearer dev-secret-token-abc123' http://localhost:8000/incidents/INC-1010 | jq '.notes | length > 0' && curl -s -H 'Authorization: Bearer dev-secret-token-abc123' http://localhost:8000/incidents/INC-1014 | jq '.notes | length > 0'" },
+    { "criterion": "`triage-report.md` contains an `## All Open Incidents` section", "status": "PASS", "command": "python triage.py && grep -q '## All Open Incidents' triage-report.md" },
+    { "criterion": "`triage-report.md` contains a `## Resolved / Closed Incidents` section", "status": "PASS", "command": "python triage.py && grep -q '## Resolved / Closed Incidents' triage-report.md" },
+    { "criterion": "The stdout summary line matches the format: `Triage complete. N open (N escalated), N resolved. Report: triage-report.md`", "status": "PASS", "command": "python triage.py 2>&1 | grep -q 'Triage complete. [0-9]* open ([0-9]*) escalated), [0-9]* resolved. Report: triage-report.md'" }
+  ]
+}

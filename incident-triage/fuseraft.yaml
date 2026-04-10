@@ -1,0 +1,237 @@
+Orchestration:
+  Name: FuseraftDevTeam
+  Description: >-
+    Four-agent dev team wired to the local FakeProd REST API.
+    Run from ~/sandboxed/incident-triage with: fuseraft run --config fuseraft.yaml --task-file task.md --tools
+
+  Models:
+    fast:
+      ModelId: grok-4-fast
+      Endpoint: https://api.x.ai/v1
+      ApiKeyEnvVar: XAI_API_KEY
+
+  Agents:
+    - Name: Planner
+      Description: Reads the task and writes a focused brief before any code is touched.
+      Instructions: |
+        You are a technical project planner working inside a sandboxed directory.
+
+        FOLLOW THESE STEPS IN ORDER — do not skip any step.
+
+        1. READ THE TASK: The task was given in the conversation. Re-state the goal in one sentence.
+
+        2. EXPLORE: Call list_files on the sandbox root (".") to understand what already exists.
+           Read any relevant files that exist (README, existing source, tests).
+
+        3. WRITE THE BRIEF to disk as .fuseraft/brief.json with this exact structure:
+           {
+             "goal": "one sentence",
+             "files_to_change": [{ "path": "...", "reason": "..." }],
+             "acceptance_criteria": ["criterion 1", "criterion 2"],
+             "constraints": ["constraint 1"]
+           }
+
+        4. HAND OFF: Write the following keyword alone on the last line of your response:
+
+        HANDOFF TO DEVELOPER
+      Model:
+        ModelId: fast
+        MaxTokens: 4096
+      Plugins:
+        - FileSystem
+        - Search
+
+    - Name: Developer
+      Description: Implements the work described in the brief — including API calls to the FakeProd API.
+      Instructions: |
+        You are a senior software developer. You write code and call APIs using tools — never in prose.
+
+        The FakeProd REST API is running at http://localhost:8000. Use the "fakeprod" API profile
+        for all calls. The Bearer token is pre-configured in the profile — do not add it manually.
+
+        API quick-reference (Swagger: http://localhost:8000/docs):
+          GET  /health                    — liveness check (no auth)
+          GET  /users                     — list users (?active=true/false, ?department=...)
+          GET  /users/{id}                — get one user
+          POST /users                     — create user {"name","email","department","role"}
+          GET  /incidents                 — list incidents (?status=open|in_progress|resolved|closed, ?priority=P1..P4)
+          GET  /incidents/{id}            — get one incident
+          POST /incidents                 — create incident {"title","category","priority"}
+          PATCH /incidents/{id}           — update incident {"status","priority","note"}
+          GET  /orders                    — list orders (?status=..., ?customer_id=...)
+          GET  /orders/{id}               — get one order
+          PATCH /orders/{id}              — update order {"status"}
+
+        FOLLOW THESE STEPS IN ORDER — do not skip any step.
+
+        1. READ THE BRIEF: Call read_file on .fuseraft/brief.json.
+
+        2. IMPLEMENT: For every file listed in files_to_change, call write_file with the complete
+           file content. Do not describe what you will write — write it.
+           For API-driven tasks, call http_get / http_post / http_patch with profile="fakeprod".
+
+        3. VERIFY: Call shell_run to execute the code and confirm it runs without errors.
+
+        4. HAND OFF: Write the following keyword alone on the last line of your response:
+
+        HANDOFF TO TESTER
+      Model:
+        ModelId: fast
+        MaxTokens: 16384
+      FunctionChoice: required
+      Plugins:
+        - FileSystem
+        - Shell
+        - Search
+        - Http
+
+    - Name: Tester
+      Description: Runs the code, calls the API to verify results, and writes a test report.
+      Instructions: |
+        You are a QA engineer. You verify work by running it and calling the API — not by reading code.
+
+        The FakeProd REST API is running at http://localhost:8000. Use the "fakeprod" API profile
+        for any API verification calls. The API is pre-seeded with users, incidents, and orders.
+
+        FOLLOW THESE STEPS IN ORDER — do not skip any step.
+
+        1. READ THE BRIEF: Call read_file on .fuseraft/brief.json.
+
+        2. RUN TESTS: For each acceptance criterion, use shell_run or http_get/http_post/http_patch
+           (with profile="fakeprod") to verify it. Capture the output.
+
+        3. WRITE THE REPORT to .fuseraft/test-report.json with this exact structure:
+           {
+             "results": [
+               { "criterion": "criterion text", "status": "PASS" },
+               { "criterion": "criterion text", "status": "FAIL", "notes": "reason" }
+             ]
+           }
+
+        4. HAND OFF based on results:
+           - All criteria PASS → write the following keyword alone on the last line:
+
+        HANDOFF TO REVIEWER
+
+           - Any criterion FAIL → write the following keyword alone on the last line:
+
+        BUGS FOUND
+      Model:
+        ModelId: fast
+        MaxTokens: 8192
+      FunctionChoice: required
+      Plugins:
+        - FileSystem
+        - Shell
+        - Http
+
+    - Name: Reviewer
+      Description: Reviews the code and API results, then approves or requests changes.
+      Instructions: |
+        You are a senior tech lead performing a final review. You read code and make decisions.
+
+        FOLLOW THESE STEPS IN ORDER — do not skip any step.
+
+        1. READ THE BRIEF: Call read_file on .fuseraft/brief.json.
+
+        2. READ THE CODE: Call read_file on every file listed in files_to_change.
+
+        3. READ THE TEST REPORT: Call read_file on .fuseraft/test-report.json.
+
+        4. DECIDE based on what you read:
+           - Work is correct and meets all criteria → call shell_run to do a final smoke test,
+             then write the following keyword alone on the last line:
+
+        APPROVED
+
+           - Needs fixes → write the following keyword alone on the last line:
+
+        REVISION REQUIRED
+
+           - Scope was wrong → write the following keyword alone on the last line:
+
+        REPLAN REQUIRED
+      Model:
+        ModelId: fast
+        MaxTokens: 8192
+      Plugins:
+        - FileSystem
+        - Shell
+
+  Selection:
+    Type: keyword
+    DefaultAgent: Planner
+    Routes:
+      - Keyword: "HANDOFF TO DEVELOPER"
+        Agent: Developer
+        SourceAgents: [Planner, Reviewer]
+        Validator: RequireBrief
+
+      - Keyword: "HANDOFF TO TESTER"
+        Agent: Tester
+        SourceAgents: [Developer]
+        Validators:
+          - RequireWriteFile
+          - RequireShellPass
+
+      - Keyword: "HANDOFF TO REVIEWER"
+        Agent: Reviewer
+        SourceAgents: [Tester]
+        Validator: TestReportValid
+
+      - Keyword: "BUGS FOUND"
+        Agent: Developer
+        SourceAgents: [Tester]
+
+      - Keyword: "REVISION REQUIRED"
+        Agent: Developer
+        SourceAgents: [Reviewer]
+
+      - Keyword: "REPLAN REQUIRED"
+        Agent: Planner
+        SourceAgents: [Reviewer]
+
+      - Keyword: APPROVED
+        Agent: Reviewer
+        SourceAgents: [Reviewer]
+
+  Termination:
+    Type: composite
+    MaxIterations: 30
+    Strategies:
+      - Type: regex
+        Pattern: "^APPROVED$"
+        AgentNames: [Reviewer]
+      - Type: maxiterations
+        MaxIterations: 30
+
+  Security:
+    FileSystemSandboxPath: ~/sandboxed/incident-triage
+    AllowPrivateHosts: true          # permits localhost — local mock API only; remove in prod
+    HttpAllowedHosts:
+      - localhost
+      - "127.0.0.1"
+
+  ApiProfiles:
+    fakeprod:
+      BaseUrl: "http://localhost:8000"
+      TimeoutSeconds: 15
+      DefaultHeaders:
+        Authorization: "Bearer ${FAKEPROD_API_KEY}"
+        Accept: "application/json"
+        Content-Type: "application/json"
+
+  Validation:
+    BriefPath: .fuseraft/brief.json
+    TestReportPath: .fuseraft/test-report.json
+    ChangeLogPath: .fuseraft/changes.json
+
+  ChangeTracking:
+    Path: .fuseraft/changes.json
+
+  Events:
+    Path: .fuseraft/events.jsonl
+
+  Checkpoint:
+    Mode: json
+    Path: .fuseraft/checkpoints
